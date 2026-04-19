@@ -1,44 +1,29 @@
 /**
- * @fileoverview Core Scraper Orchestrator
- * Bootstraps Playwright (Stealth), executes component scripts, 
- * filters results, prevents redundancies, and dispatches updates.
+ * @fileoverview Core HTTP Scraper Orchestrator
+ * Fully refactored to remove Playwright dependency.
+ * Bootstraps the HTTP routines, reads user configurations, launches scrapers natively,
+ * evaluates duplication memory, and dispatches updates cleanly.
  */
-const { chromium } = require('playwright-extra');
-const stealth = require('puppeteer-extra-plugin-stealth')();
-const { readConfig, filterListings, sendTelegramAlerts } = require('./utils');
-const { scrapeHomeless } = require('./homeless');
+require('dotenv').config();
+const cron = require('node-cron');
+const { readUsersConfigs, sendTelegramAlerts, filterListings } = require('./utils');
+const { scrapeYad2 } = require('./yad2_http');
 const fs = require('fs');
 const path = require('path');
 
-// Apply stealth plugin to mask automation signatures from bot protections
-chromium.use(stealth);
+// Memory Persistence location
+const memoryPath = path.join(__dirname, 'seen_listings.json');
 
 /**
- * Main execution container handling end-to-end scraper behavior safely.
+ * Main execution container handling end-to-end generic HTTP scraper behavior safely.
  * @returns {Promise<void>}
  */
 async function runOrchestrator() {
-    let browser;
     try {
-        console.log("[Orchestrator] System booting. Loading configuration definitions...");
-        const searchConfig = readConfig();
+        console.log('[Orchestrator] Lightweight HTTP System booting. Loading configuration definitions...');
+        const usersConfigs = readUsersConfigs();
 
-        console.log("[Orchestrator] Spawning Chromium headless interface (Stealth Profile enabled)...");
-        browser = await chromium.launch({ headless: false });
-
-        const context = await browser.newContext();
-        const page = await context.newPage();
-
-        // 1. Scrape Homeless
-        const homelessData = await scrapeHomeless(page, searchConfig);
-        console.log(`\n[Orchestrator] Extraction phase complete: ${homelessData.length} unfiltered item(s) secured.`);
-
-        // 2. Filter Results (Negative Keywords & Price check bounds enforcement)
-        const filteredListings = filterListings(homelessData, searchConfig);
-        console.log(`\n[Orchestrator] Final Report generated: ${filteredListings.length} premium matches survived validation logic.\n`);
-
-        // 3. Deduplicate listings using persistent memory
-        const memoryPath = path.join(__dirname, 'seen_listings.json');
+        // Initialize Central Data Deduplication Memory Container
         let seenListings = [];
         try {
             if (fs.existsSync(memoryPath)) {
@@ -49,35 +34,97 @@ async function runOrchestrator() {
             console.warn(`[Orchestrator] Memory read anomaly - proceeding with blank state: ${error.message}`);
         }
 
-        const newListings = filteredListings.filter(listing => !seenListings.includes(listing.link));
+        // Iterate over configurations
+        for (const [chatId, configsArray] of Object.entries(usersConfigs)) {
+            console.log(`\n[Orchestrator] Processing tasks for User (Chat ID): ${chatId}`);
 
-        if (newListings.length === 0) {
-            console.log("[Orchestrator] Analysis result: No fresh unseen assets retrieved. Skipping push alerts.");
-            return; // Exit gracefully
+            for (const searchConfig of configsArray) {
+                // Support both legacy string configurations and the new multi-city array format
+                const citiesTargetGroup = Array.isArray(searchConfig.cities) ? searchConfig.cities : [searchConfig.cities];
+
+                // Execute sequentially for each city explicitly
+                for (const cityTarget of citiesTargetGroup) {
+                    if (!cityTarget) continue;
+
+                    const executionConfig = { ...searchConfig, cities: cityTarget };
+                    console.log(`\n[Orchestrator] Running Configuration uniquely for City: ${cityTarget}`);
+
+                    let extractedData = [];
+                    try {
+                        // Extract strictly via pure HTTP targeting
+                        extractedData = await scrapeYad2(executionConfig);
+                    } catch (scrapeErr) {
+                        console.error(`[Orchestrator] Extraction error for ${cityTarget}: ${scrapeErr.message}`);
+                        continue;
+                    }
+
+                    if (extractedData.length === 0) {
+                        console.log('[Orchestrator] Extraction yield was empty. Moving to next target.');
+                        continue;
+                    }
+
+                    // Strict memory evaluation logic
+                    let newListings = extractedData.filter((listing) => !seenListings.includes(listing.id));
+
+                    if (newListings.length === 0) {
+                        console.log('[Orchestrator] Analysis result: No fresh unseen assets retrieved. Skipping complex filtering.');
+                        continue;
+                    }
+
+                    // Apply Global Unified Negative Check and Math parsing
+                    const beforeFilterCount = newListings.length;
+                    newListings = filterListings(newListings, executionConfig);
+
+                    if (newListings.length < beforeFilterCount) {
+                        console.log(`[Orchestrator] Removed ${beforeFilterCount - newListings.length} listings containing blacklisted/disqualified textual content.`);
+                    }
+
+                    if (newListings.length === 0) {
+                        console.log('[Orchestrator] Post-Filter: No assets survived the blacklist logic. Skipping push alerts.');
+                        continue;
+                    }
+
+                    console.log(`[Orchestrator] Validated ${newListings.length} absolutely pristine discoveries. Dispatching logic...`);
+
+                    // Update Persistence JSON Memory Buffer immediately
+                    const newIds = newListings.map((listing) => listing.id);
+                    seenListings.push(...newIds);
+                    try {
+                        fs.writeFileSync(memoryPath, JSON.stringify(seenListings, null, 2), 'utf8');
+                    } catch (error) {
+                        console.error(`[Orchestrator] Persistence failure when updating local memory file: ${error.message}`);
+                    }
+
+                    // Securely Dispatch payloads to Telegram via Utils layer
+                    await sendTelegramAlerts(newListings, chatId);
+                }
+            }
         }
 
-        // 4. Update memory with new listings
-        const newLinks = newListings.map(listing => listing.link);
-        seenListings.push(...newLinks);
-        
-        try {
-            fs.writeFileSync(memoryPath, JSON.stringify(seenListings, null, 2), 'utf8');
-        } catch (error) {
-            console.error(`[Orchestrator] Persistence failure when updating local memory file: ${error.message}`);
-        }
-
-        // 5. Send to Telegram (includes 1.5s delay inside)
-        await sendTelegramAlerts(newListings);
-
+        console.log('\n[Orchestrator] Sequence completed seamlessly. Shutting down.');
     } catch (error) {
-        console.error(`[Orchestrator] A fatal runtime exception occurred preventing normal execution flow:`, error);
-    } finally {
-        if (browser) {
-            console.log("\n[Orchestrator] Shutting down Chromium interface sequence...");
-            await browser.close();
-        }
+        console.error('[Orchestrator] A fatal runtime exception occurred preventing normal execution flow:', error);
     }
 }
 
-// Execute
-runOrchestrator();
+// Establish cron schedule to execute twice a day at 04:00 and 16:00 exclusively under Israel local time
+cron.schedule(
+    '0 4,16 * * *',
+    () => {
+        console.log('[Chrontab] Triggering automated orchestrator payload extraction...');
+        runOrchestrator();
+    },
+    {
+        scheduled: true,
+        timezone: 'Asia/Jerusalem',
+    }
+);
+
+console.log('[Scheduler] AptHunter Background Job active and armed. Awaiting 04:00 and 16:00 (Asia/Jerusalem).');
+console.log("[Scheduler] Tip: You can run 'node scraper.js --run-now' to execute an immediate scrape on startup.");
+
+// Immediate Execution Option
+if (process.argv.includes('--run-now') || process.argv.includes('--now')) {
+    console.log('\n[Scheduler] Immediate execution flag detected (--run-now). Launching orchestrator...');
+    runOrchestrator();
+}

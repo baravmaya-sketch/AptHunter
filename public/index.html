@@ -1,234 +1,692 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AptHunter - הגדרת חיפוש</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap');
-        body { 
-            font-family: 'Assistant', sans-serif; 
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-        }
+      @import url("https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap");
+      body {
+        font-family: "Assistant", sans-serif;
+      }
+      /* Custom scrollbar for dropdown */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
     </style>
-</head>
-<body class="antialiased min-h-screen flex items-center justify-center p-4">
-    
-    <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl w-full max-w-lg p-8 sm:p-10 transform transition-all">
-        
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-2" id="formTitle">
-                הוספת סינון חדש
-            </h1>
-            <p class="text-sm text-gray-500 font-semibold">AptHunter איתור דירות אוטומטי</p>
+  </head>
+  <body
+    class="antialiased bg-gray-50 flex items-center justify-center min-h-screen p-4"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 sm:p-10 relative"
+    >
+      <div class="text-center mb-8">
+        <h1
+          class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-2"
+          id="formTitle"
+        >
+          הוספת סינון חדש
+        </h1>
+        <p class="text-sm text-gray-500 font-semibold">
+          AptHunter איתור דירות אוטומטי
+        </p>
+      </div>
+
+      <!-- Delete Confirmation View -->
+      <div id="deleteView" class="hidden text-center space-y-6">
+        <div class="text-red-500 mb-4">
+          <svg
+            class="mx-auto h-16 w-16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
         </div>
-        
-        <form id="configForm" class="space-y-6">
-            
-            <!-- City Input -->
-            <div class="relative">
-                <label class="block text-sm font-bold text-gray-700 mb-2" for="cities">עיר מבוקשת (רחוב/שכונה)</label>
-                <input type="text" id="cities" name="cities" required 
-                       class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-colors text-gray-800 placeholder-gray-400 font-semibold" 
-                       placeholder="לדוגמה: תל אביב יפו">
-            </div>
+        <h3 class="text-xl font-bold text-gray-800">
+          האם אתה בטוח שברצונך למחוק את הסינון?
+        </h3>
+        <p id="deleteConfigDetails" class="text-gray-600 font-medium"></p>
+        <div class="flex gap-4 pt-4">
+          <button
+            type="button"
+            id="confirmDeleteBtn"
+            class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition"
+          >
+            כן, מחק סינון
+          </button>
+          <button
+            type="button"
+            id="cancelDeleteBtn"
+            class="flex-1 bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300 transition"
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
 
-            <!-- Rooms & Roommates Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2" for="rooms">כמות חדרים</label>
-                    <div class="relative">
-                        <select id="rooms" name="rooms" required 
-                                class="w-full appearance-none border-2 border-gray-200 rounded-xl p-3 pr-10 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-colors bg-white font-semibold text-gray-800 cursor-pointer">
-                            <option value="1-2">1 - 2 חדרים</option>
-                            <option value="2-3" selected>2 - 3 חדרים</option>
-                            <option value="3-4">3 - 4 חדרים</option>
-                            <option value="4-5">4 - 5 חדרים</option>
-                            <option value="5-6">5 - 6 חדרים</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col justify-center pt-2">
-                    <label class="flex items-center space-x-3 space-x-reverse cursor-pointer group">
-                        <div class="relative flex items-center justify-center">
-                            <input type="checkbox" id="roommates" name="roommates" class="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-orange-500 checked:border-orange-500 transition-colors cursor-pointer">
-                            <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                        <span class="text-sm font-bold text-gray-700 group-hover:text-orange-600 transition-colors">מחפש שותפים?</span>
-                    </label>
-                </div>
-            </div>
+      <!-- Main Form View -->
+      <form id="configForm" class="space-y-6 hidden">
+        <!-- City Select (Custom Multi-Select) -->
+        <div class="relative">
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >ערים מבוקשות</label
+          >
 
-            <!-- Rent Range Grid -->
-            <div class="grid grid-cols-2 gap-5 pt-2 border-t-2 border-gray-100 mt-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2" for="rentMin">שכ"ד מינימלי (₪)</label>
-                    <div class="relative">
-                        <select id="rentMin" name="rentMin" class="w-full appearance-none border-2 border-gray-200 rounded-xl p-3 pr-10 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-colors bg-white font-semibold text-gray-800 cursor-pointer"></select>
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2" for="rentMax">שכ"ד מקסימלי (₪)</label>
-                    <div class="relative">
-                        <select id="rentMax" name="rentMax" class="w-full appearance-none border-2 border-gray-200 rounded-xl p-3 pr-10 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-colors bg-white font-semibold text-gray-800 cursor-pointer"></select>
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-                </div>
+          <div class="relative">
+            <input
+              type="text"
+              id="citySearchInput"
+              placeholder="חיפוש עיר..."
+              autocomplete="off"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none transition-colors text-gray-800 bg-white font-semibold"
+            />
+            <div
+              class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </div>
+          </div>
 
-            <button type="submit" id="submitBtn" class="w-full mt-8 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition-all duration-200 flex justify-center items-center gap-2">
-                <span>יישם ושמור סינון</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div
+            id="cityDropdownPanel"
+            class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar"
+          >
+            <div
+              class="flex justify-between items-center p-2 border-b border-gray-100 bg-gray-50 sticky top-0 z-10"
+            >
+              <button
+                type="button"
+                id="selectAllCitiesBtn"
+                class="text-sm text-orange-600 font-bold hover:text-orange-800 px-2 py-1 rounded hover:bg-orange-100 transition"
+              >
+                בחר הכל
+              </button>
+              <button
+                type="button"
+                id="clearAllCitiesBtn"
+                class="text-sm text-gray-500 font-bold hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition"
+              >
+                נקה הכל
+              </button>
+            </div>
+            <div id="cityOptionsList" class="p-1">
+              <!-- Checkboxes injected here -->
+            </div>
+          </div>
+
+          <!-- Selected Cities Chips -->
+          <div
+            id="selectedCitiesContainer"
+            class="flex flex-wrap gap-2 mt-3 empty:hidden"
+          ></div>
+        </div>
+
+        <!-- Rent Range -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >מחיר (₪)</label
+          >
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <input
+              type="number"
+              id="minRent"
+              placeholder="מ-"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <span class="text-gray-400 font-bold">-</span>
+            <input
+              type="number"
+              id="maxRent"
+              placeholder="עד-"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Rooms Range -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >חדרים</label
+          >
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <input
+              type="number"
+              id="minRooms"
+              placeholder="מ-"
+              step="0.5"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <span class="text-gray-400 font-bold">-</span>
+            <input
+              type="number"
+              id="maxRooms"
+              placeholder="עד-"
+              step="0.5"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Square Meters Range -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >גודל במ"ר</label
+          >
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <input
+              type="number"
+              id="minSqm"
+              placeholder="מ-"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <span class="text-gray-400 font-bold">-</span>
+            <input
+              type="number"
+              id="maxSqm"
+              placeholder="עד-"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Custom Disqualification Words -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >מילים לפסילה
+            <span class="text-xs text-gray-400 font-normal"
+              >(עד 7 מילים)</span
+            ></label
+          >
+          <div class="flex items-center space-x-2 space-x-reverse mb-3">
+            <input
+              type="text"
+              id="keywordInput"
+              placeholder="הכנס מילה ולחץ אנטר או הוסף"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <button
+              type="button"
+              id="addKeywordBtn"
+              class="bg-gray-800 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700 transition"
+            >
+              הוסף
             </button>
-        </form>
+          </div>
+          <!-- Keyword Chips Container -->
+          <div
+            id="keywordsContainer"
+            class="flex flex-wrap gap-2 empty:hidden"
+          ></div>
+        </div>
 
-        <!-- Dynamic Messages -->
-        <div id="successMessage" class="hidden text-center mt-6 p-6 bg-green-50 border-2 border-green-200 text-green-700 rounded-2xl transform scale-95 opacity-0 transition-all duration-500">
-            <svg class="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h3 class="text-xl font-bold mb-1">ההגדרות נשמרו בהצלחה!</h3>
-            <p class="text-sm font-medium">הודעה נשלחה אליך בטלגרם.<br>ניתן לסגור חלון זה.</p>
-        </div>
-        
-        <div id="errorMessage" class="hidden text-center mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span id="errorText"></span>
-        </div>
-        
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full mt-8 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg hover:shadow-xl transform transition-all duration-200"
+        >
+          <span>יישם ושמור סינון</span>
+        </button>
+      </form>
+
+      <!-- Dynamic Messages -->
+      <div
+        id="successMessage"
+        class="hidden text-center mt-6 p-6 bg-green-50 border-2 border-green-200 text-green-700 rounded-2xl"
+      >
+        <h3 class="text-xl font-bold mb-2" id="successTitle">
+          ההגדרות נשמרו בהצלחה!
+        </h3>
+        <p class="text-sm font-medium mb-3" id="successDetails"></p>
+        <p
+          class="text-xs font-bold text-green-800 bg-green-100 py-2 rounded-lg"
+        >
+          ניתן לסגור חלון זה ולחזור לטלגרם.
+        </p>
+      </div>
+
+      <div
+        id="errorMessage"
+        class="hidden text-center mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-bold"
+      >
+        <span id="errorText"></span>
+      </div>
     </div>
 
-        /**
-         * @fileoverview Frontend Client Logic (Vanilla JS)
-         * Intercepts URL variables, configures the UI state for Add/Edit flows,
-         * and securely POSTs the resulting JSON payload back to Express.
-         */
-        const urlParams = new URLSearchParams(window.location.search);
-        const chatId = urlParams.get('chatId');
-        const action = urlParams.get('action');
-        const configId = urlParams.get('configId');
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatId = urlParams.get("chatId");
+      const action = urlParams.get("action"); // 'add', 'edit', 'delete'
+      const configId = urlParams.get("configId");
 
-        const rentMinSelect = document.getElementById('rentMin');
-        const rentMaxSelect = document.getElementById('rentMax');
-        
-        // Populate Rent Select Options logically with clean Israeli formatting
-        for (let i = 1000; i <= 15000; i += 500) {
-            const formatted = i.toLocaleString('en-US');
-            rentMinSelect.add(new Option(formatted, i));
-            rentMaxSelect.add(new Option(formatted, i));
+      let allCities = []; // Array of {name, code}
+      let cityMap = {}; // Map of code -> name
+      let selectedCityCodes = new Set();
+      let customKeywords = [];
+      const MAX_KEYWORDS = 7;
+
+      // Elements
+      const formView = document.getElementById("configForm");
+      const deleteView = document.getElementById("deleteView");
+      const formTitle = document.getElementById("formTitle");
+      const errorMsgContainer = document.getElementById("errorMessage");
+      const errorText = document.getElementById("errorText");
+      const successMessage = document.getElementById("successMessage");
+      const submitBtn = document.getElementById("submitBtn");
+
+      // City Elements
+      const citySearchInput = document.getElementById("citySearchInput");
+      const cityDropdownPanel = document.getElementById("cityDropdownPanel");
+      const cityOptionsList = document.getElementById("cityOptionsList");
+      const selectedCitiesContainer = document.getElementById(
+        "selectedCitiesContainer",
+      );
+      const selectAllCitiesBtn = document.getElementById("selectAllCitiesBtn");
+      const clearAllCitiesBtn = document.getElementById("clearAllCitiesBtn");
+
+      // Keyword Elements
+      const kwInput = document.getElementById("keywordInput");
+      const kwContainer = document.getElementById("keywordsContainer");
+      const addKwBtn = document.getElementById("addKeywordBtn");
+
+      function showError(msg) {
+        errorText.textContent = msg;
+        errorMsgContainer.classList.remove("hidden");
+      }
+
+      function hideError() {
+        errorMsgContainer.classList.add("hidden");
+      }
+
+      async function init() {
+        if (!chatId) {
+          showError("שגיאה נוצרת משום שאין Chat ID בכתובת האתר.");
+          return;
         }
 
-        // Set default rent visually appealing
-        rentMinSelect.value = 3500;
-        rentMaxSelect.value = 5000;
+        try {
+          // Fetch cities
+          const res = await fetch("/api/cities");
+          allCities = await res.json();
 
-        // Fetch existing data if editing mode
-        if (action === 'edit' && configId) {
-            document.getElementById('formTitle').textContent = "עריכת הגדרות קיימות";
-            document.getElementById('submitBtn').querySelector('span').textContent = "עדכן סינון ושמור";
-            
-            fetch(`/api/config?chatId=${chatId}&configId=${configId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.error) throw new Error("Config not found");
-                    
-                    document.getElementById('cities').value = data.cities || '';
-                    document.getElementById('rooms').value = data.rooms || '2-3';
-                    document.getElementById('roommates').checked = (data.roommates === 'כן');
-                    
-                    if (data.rent) {
-                        const parts = data.rent.split('-');
-                        if(parts.length === 2) {
-                            document.getElementById('rentMin').value = parts[0];
-                            document.getElementById('rentMax').value = parts[1];
-                        }
-                    }
-                })
-                .catch(err => {
-                    showError("לא ניתן לטעון את נתוני הסינון.");
-                });
-        }
+          allCities.forEach((city) => {
+            cityMap[city.code] = city.name;
+          });
 
-        /**
-         * Displays a highly visible warning element to the user directly on the interface.
-         * 
-         * @param {string} msg - The error message string to render.
-         */
-        function showError(msg) {
-            console.warn(`[Frontend UI] Error Display Triggered: ${msg}`);
-            document.getElementById('errorText').textContent = msg;
-            document.getElementById('errorMessage').classList.remove('hidden');
-        }
-
-        document.getElementById('configForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (!chatId) {
-                showError("שגיאה נוצרת משום שאין Chat ID בכתובת האתר.");
-                return;
+          if (action === "delete") {
+            await setupDeleteView();
+          } else {
+            setupFormView();
+            if (action === "edit" && configId) {
+              await fetchAndPopulateConfig();
             }
+          }
+        } catch (err) {
+          showError("שגיאת חיבור לשרת בעת טעינת הנתונים.");
+        }
+      }
 
-            const minR = parseInt(rentMinSelect.value);
-            const maxR = parseInt(rentMaxSelect.value);
-            if (minR >= maxR) {
-                showError("שכר דירה מינימלי חייב להיות קטן משכר הדירה המקסימלי.");
-                return;
-            }
-            
-            document.getElementById('errorMessage').classList.add('hidden');
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+      // --- Action: Delete ---
+      async function setupDeleteView() {
+        deleteView.classList.remove("hidden");
+        formTitle.textContent = "מחיקת סינון";
 
-            const payload = {
-                chatId: chatId,
-                action: action,
-                config: {
-                    id: configId, // Submits undefined if it's a new config
-                    cities: document.getElementById('cities').value,
-                    rooms: document.getElementById('rooms').value,
-                    rent: `${minR}-${maxR}`,
-                    roommates: document.getElementById('roommates').checked ? 'כן' : 'לא',
-                    sublet: 'לא משנה', // Default since UI size was shrunk for MVP
-                    broker: 'לא משנה'
-                }
-            };
+        try {
+          const res = await fetch(
+            `/api/config?chatId=${chatId}&configId=${configId}`,
+          );
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
 
+          const citiesArr = Array.isArray(data.cities)
+            ? data.cities
+            : [data.cities];
+          const cityNames = citiesArr.map((c) => cityMap[c] || c).join(", ");
+          document.getElementById("deleteConfigDetails").textContent =
+            `עבור הערים: ${cityNames}`;
+
+          document.getElementById("confirmDeleteBtn").onclick = async () => {
+            hideError();
+            document.getElementById("confirmDeleteBtn").disabled = true;
             try {
-                const res = await fetch('/api/save-config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const data = await res.json();
-                if (res.ok) {
-                    const form = document.getElementById('configForm');
-                    const success = document.getElementById('successMessage');
-                    
-                    form.classList.add('hidden');
-                    success.classList.remove('hidden', 'scale-95', 'opacity-0');
-                    success.classList.add('scale-100', 'opacity-100');
-                } else {
-                    showError(data.error || "אירעה שגיאה בשמירה. קוד תקלה 500.");
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-                }
-            } catch (err) {
-                showError("שגיאת שרת כללית מנעה את עדכון הפרטים.");
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+              const delRes = await fetch("/api/delete-config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chatId, configId }),
+              });
+              if (delRes.ok) {
+                deleteView.classList.add("hidden");
+                document.getElementById("successTitle").textContent =
+                  "הסינון נמחק בהצלחה!";
+                document.getElementById("successDetails").textContent =
+                  `הסינון עבור ${cityNames} הוסר מהמערכת.`;
+                successMessage.classList.remove("hidden");
+              } else {
+                const errData = await delRes.json();
+                showError(errData.error || "שגיאה במחיקה.");
+                document.getElementById("confirmDeleteBtn").disabled = false;
+              }
+            } catch (e) {
+              showError("שגיאת שרת מנעה את המחיקה.");
+              document.getElementById("confirmDeleteBtn").disabled = false;
             }
+          };
+
+          document.getElementById("cancelDeleteBtn").onclick = () => {
+            window.close(); // Attempt to close, though telegram behavior varies
+            deleteView.innerHTML =
+              "<h3 class='text-xl font-bold text-gray-800 mt-8'>הפעולה בוטלה. ניתן לסגור חלון זה.</h3>";
+          };
+        } catch (e) {
+          showError("לא ניתן לטעון את נתוני הסינון.");
+        }
+      }
+
+      // --- Action: Add / Edit ---
+      function setupFormView() {
+        formView.classList.remove("hidden");
+        if (action === "edit") {
+          formTitle.textContent = "עריכת הגדרות קיימות";
+          submitBtn.querySelector("span").textContent = "עדכן סינון ושמור";
+        }
+
+        // Setup City Dropdown Interactions
+        citySearchInput.addEventListener("focus", () => {
+          cityDropdownPanel.classList.remove("hidden");
+          renderCityOptions();
         });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+          if (
+            !citySearchInput.contains(e.target) &&
+            !cityDropdownPanel.contains(e.target) &&
+            !e.target.closest(".city-remove-btn")
+          ) {
+            cityDropdownPanel.classList.add("hidden");
+          }
+        });
+
+        citySearchInput.addEventListener("input", () => {
+          cityDropdownPanel.classList.remove("hidden");
+          renderCityOptions();
+        });
+
+        selectAllCitiesBtn.addEventListener("click", () => {
+          const visibleCheckboxes =
+            cityOptionsList.querySelectorAll(".city-checkbox");
+          visibleCheckboxes.forEach((cb) => {
+            selectedCityCodes.add(cb.value);
+            cb.checked = true;
+          });
+          renderSelectedCities();
+        });
+
+        clearAllCitiesBtn.addEventListener("click", () => {
+          const visibleCheckboxes =
+            cityOptionsList.querySelectorAll(".city-checkbox");
+          visibleCheckboxes.forEach((cb) => {
+            selectedCityCodes.delete(cb.value);
+            cb.checked = false;
+          });
+          renderSelectedCities();
+        });
+
+        renderCityOptions();
+      }
+
+      async function fetchAndPopulateConfig() {
+        try {
+          const res = await fetch(
+            `/api/config?chatId=${chatId}&configId=${configId}`,
+          );
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+
+          const savedCities = data.cities || [];
+          const citiesArray = Array.isArray(savedCities)
+            ? savedCities
+            : [savedCities];
+          citiesArray.forEach((c) => selectedCityCodes.add(c));
+
+          document.getElementById("minRent").value = data.minRent || "";
+          document.getElementById("maxRent").value = data.maxRent || "";
+          document.getElementById("minRooms").value = data.minRooms || "";
+          document.getElementById("maxRooms").value = data.maxRooms || "";
+          document.getElementById("minSqm").value = data.minSqm || "";
+          document.getElementById("maxSqm").value = data.maxSqm || "";
+
+          customKeywords = data.customNegativeKeywords || [];
+
+          renderCityOptions();
+          renderSelectedCities();
+          renderKeywords();
+        } catch (err) {
+          showError("לא ניתן לטעון את נתוני הסינון לעריכה.");
+        }
+      }
+
+      // --- City UI Logic ---
+      function renderCityOptions() {
+        const query = citySearchInput.value.trim().toLowerCase();
+        const filtered = allCities.filter((city) => city.name.includes(query));
+
+        if (filtered.length === 0) {
+          cityOptionsList.innerHTML =
+            '<div class="p-3 text-sm text-gray-500 text-center">לא נמצאו ערים</div>';
+          return;
+        }
+
+        cityOptionsList.innerHTML = "";
+        filtered.forEach((city) => {
+          const label = document.createElement("label");
+          label.className =
+            "flex items-center space-x-2 space-x-reverse p-2 hover:bg-orange-50 rounded cursor-pointer transition-colors";
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.value = city.code;
+          cb.className =
+            "city-checkbox w-4 h-4 text-orange-600 rounded focus:ring-orange-500 cursor-pointer";
+          cb.checked = selectedCityCodes.has(city.code);
+
+          cb.addEventListener("change", (e) => {
+            if (e.target.checked) {
+              selectedCityCodes.add(city.code);
+            } else {
+              selectedCityCodes.delete(city.code);
+            }
+            renderSelectedCities();
+          });
+
+          const span = document.createElement("span");
+          span.className = "text-gray-800 font-medium select-none";
+          span.textContent = city.name;
+
+          label.appendChild(cb);
+          label.appendChild(span);
+          cityOptionsList.appendChild(label);
+        });
+      }
+
+      function renderSelectedCities() {
+        selectedCitiesContainer.innerHTML = "";
+
+        // Sync checkboxes in dropdown if visible
+        const checkboxes = cityOptionsList.querySelectorAll(".city-checkbox");
+        checkboxes.forEach((cb) => {
+          cb.checked = selectedCityCodes.has(cb.value);
+        });
+
+        selectedCityCodes.forEach((code) => {
+          const name = cityMap[code] || code;
+          const chip = document.createElement("div");
+          chip.className =
+            "flex items-center bg-blue-50 text-blue-800 px-3 py-1.5 rounded-full text-sm font-bold border border-blue-200 shadow-sm transition-all hover:shadow";
+
+          const textSpan = document.createElement("span");
+          textSpan.textContent = name;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className =
+            "city-remove-btn mr-2 text-blue-500 hover:text-blue-900 focus:outline-none text-lg leading-none transition-colors";
+          removeBtn.innerHTML = "&times;";
+          removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            selectedCityCodes.delete(code);
+            renderSelectedCities();
+          };
+
+          chip.appendChild(textSpan);
+          chip.appendChild(removeBtn);
+          selectedCitiesContainer.appendChild(chip);
+        });
+      }
+
+      // --- Custom Keywords Logic ---
+      function renderKeywords() {
+        kwContainer.innerHTML = "";
+        customKeywords.forEach((kw, index) => {
+          const chip = document.createElement("div");
+          chip.className =
+            "flex items-center bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold border border-gray-300 shadow-sm transition-all hover:bg-gray-200";
+
+          const text = document.createElement("span");
+          text.textContent = kw;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className =
+            "mr-2 text-gray-500 hover:text-red-600 focus:outline-none text-lg leading-none transition-colors";
+          removeBtn.innerHTML = "&times;";
+          removeBtn.onclick = () => {
+            customKeywords.splice(index, 1);
+            renderKeywords();
+          };
+
+          chip.appendChild(text);
+          chip.appendChild(removeBtn);
+          kwContainer.appendChild(chip);
+        });
+      }
+
+      function addKeyword() {
+        const val = kwInput.value.trim();
+        if (
+          val &&
+          customKeywords.length < MAX_KEYWORDS &&
+          !customKeywords.includes(val)
+        ) {
+          customKeywords.push(val);
+          kwInput.value = "";
+          renderKeywords();
+        } else if (customKeywords.length >= MAX_KEYWORDS) {
+          showError("ניתן להוסיף עד 7 מילות סינון בלבד.");
+        }
+      }
+
+      addKwBtn.addEventListener("click", addKeyword);
+      kwInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addKeyword();
+        }
+      });
+
+      // --- Form Submit ---
+      formView.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideError();
+
+        if (selectedCityCodes.size === 0) {
+          showError("חובה לבחור לפחות עיר אחת.");
+          return;
+        }
+
+        submitBtn.disabled = true;
+
+        const payload = {
+          chatId: chatId,
+          action: action,
+          config: {
+            id: configId,
+            cities: Array.from(selectedCityCodes),
+            minRent: document.getElementById("minRent").value,
+            maxRent: document.getElementById("maxRent").value,
+            minRooms: document.getElementById("minRooms").value,
+            maxRooms: document.getElementById("maxRooms").value,
+            minSqm: document.getElementById("minSqm").value,
+            maxSqm: document.getElementById("maxSqm").value,
+            customNegativeKeywords: customKeywords,
+          },
+        };
+
+        try {
+          const res = await fetch("/api/save-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            formView.classList.add("hidden");
+            const cityNames = payload.config.cities
+              .map((c) => cityMap[c] || c)
+              .join(", ");
+            document.getElementById("successTitle").textContent =
+              action === "edit"
+                ? "הסינון עודכן בהצלחה!"
+                : "הסינון נשמר בהצלחה!";
+            document.getElementById("successDetails").textContent =
+              `ממתין לתוצאות עבור הערים: ${cityNames}`;
+            successMessage.classList.remove("hidden");
+          } else {
+            showError(data.error || "אירעה שגיאה בשמירה.");
+            submitBtn.disabled = false;
+          }
+        } catch (err) {
+          showError("שגיאת שרת מנעה את עדכון הפרטים.");
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Initialize App
+      init();
     </script>
-</body>
+  </body>
 </html>

@@ -2,3 +2,4 @@ node_modules/
 .env
 seen_listings.json
 users_configs.json
+scratch/
