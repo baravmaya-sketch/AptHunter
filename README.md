@@ -1,6 +1,6 @@
 # AptHunter - Automated Real Estate Scraper & Telegram Bot
 
-AptHunter is a Node.js-based bot that automatically scrapes real estate sites (Yad2) for apartments matching your criteria and sends immediate alerts to your Telegram.
+AptHunter is a Node.js-based bot that automatically scrapes real estate sites for apartments matching your criteria and sends immediate alerts to your Telegram.
 
 ## Features
 
